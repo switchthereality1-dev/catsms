@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#1a0a2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22CatsMS%22%2C%22short_name%22%3A%22CatsMS%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22fullscreen%22%2C%22background_color%22%3A%22%231a0a2a%22%2C%22theme_color%22%3A%22%231a0a2a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%2527112%2527%2520fill%253D%2527%25231a0a2a%2527%2F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527360%2527%2520text-anchor%253D%2527middle%2527%2520font-size%253D%2527280%2527%253E%25F0%259F%2590%25B1%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+<title>🐱 CatsMS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;font-family:'Press Start 2P',monospace;image-rendering:pixelated}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#0a0a1a;color:#fff}
+#app{width:100%;height:100dvh;display:flex;flex-direction:column;background:linear-gradient(180deg,#1a0a2a,#0a0418)}
+
+/* ЛОГИН */
+#loginScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:100;background:linear-gradient(180deg,#1a0a2a,#0a0418)}
+#loginScreen.hidden{display:none}
+#loginScreen h1{font-size:22px;color:#ffd54f;margin-bottom:8px;text-shadow:3px 3px 0 #000;letter-spacing:2px}
+#loginScreen h2{font-size:11px;color:#4fc3f7;margin-bottom:25px;letter-spacing:2px}
+#catCanvasLogin{width:180px;height:180px;margin-bottom:20px}
+.loginInput{background:#1a2a4a;border:3px solid #4fc3f7;border-radius:8px;padding:12px;color:#fff;font-family:inherit;font-size:10px;width:100%;max-width:320px;margin-bottom:10px;outline:none}
+.loginInput:focus{border-color:#ffd54f}
+.loginInput::placeholder{color:#6a7a8a}
+#btnLogin, #btnRegister{background:linear-gradient(180deg,#66bb6a,#388e3c);color:#fff;border:3px solid #fff;border-radius:10px;padding:14px;font-family:inherit;font-weight:900;font-size:11px;cursor:pointer;width:100%;max-width:320px;margin-bottom:8px;box-shadow:0 5px 0 #1b5e20;text-shadow:2px 2px 0 rgba(0,0,0,.4);letter-spacing:1px}
+#btnLogin:active, #btnRegister:active{transform:translateY(3px);box-shadow:0 2px 0 #1b5e20}
+#btnRegister{background:linear-gradient(180deg,#4fc3f7,#0277bd);box-shadow:0 5px 0 #0a3a60}
+#loginError{color:#ff5555;font-size:9px;margin-top:10px;text-align:center;min-height:20px;line-height:1.6;max-width:320px}
+
+/* ГЛАВНЫЙ */
+#mainScreen{display:none;flex-direction:column;height:100dvh}
+#mainScreen.on{display:flex}
+
+#header{display:flex;align-items:center;gap:10px;padding:10px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(180deg,#2a1840,#150826);border-bottom:3px solid #ff8ec8;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+#headerAvatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(180deg,#3a1a5a,#1a0a3a);border:3px solid #ffd54f;flex-shrink:0;overflow:hidden;box-shadow:0 3px 0 #000}
+#headerAvatar canvas{width:100%;height:100%}
+#headerInfo{flex:1;min-width:0}
+#headerName{font-size:12px;color:#ffd54f;font-weight:900;text-shadow:2px 2px 0 #000;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#headerStatus{font-size:7px;color:#4fc3f7;letter-spacing:1px}
+#headerButtons{display:flex;gap:6px;flex-shrink:0}
+.iconBtn{width:40px;height:40px;border-radius:10px;background:linear-gradient(180deg,#4a2558,#2d1338);border:2px solid #6a3a7a;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.iconBtn:active{transform:translateY(2px)}
+
+#tabs{display:flex;background:#0a0418;border-bottom:2px solid #3a1a5a}
+.tab{flex:1;padding:12px;text-align:center;font-size:9px;color:#6a7a8a;cursor:pointer;border-bottom:3px solid transparent;letter-spacing:1px}
+.tab.active{color:#ffd54f;border-bottom-color:#ffd54f}
+
+#content{flex:1;overflow-y:auto;padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+#content::-webkit-scrollbar{width:6px}
+#content::-webkit-scrollbar-thumb{background:#ff8ec8;border-radius:3px}
+
+/* ЧАТЫ */
+.chatItem{display:flex;align-items:center;gap:10px;padding:10px;background:linear-gradient(180deg,#1a2a4a,#0a1a3a);border:2px solid #2a4a6a;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.15s}
+.chatItem:hover,.chatItem:active{border-color:#4fc3f7;transform:translateX(2px)}
+.chatAvatar{width:50px;height:50px;border-radius:50%;background:linear-gradient(180deg,#3a1a5a,#1a0a3a);border:2px solid #ffd54f;flex-shrink:0;overflow:hidden}
+.chatAvatar canvas{width:100%;height:100%}
+.chatInfo{flex:1;min-width:0}
+.chatName{font-size:10px;color:#fff;font-weight:900;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chatPreview{font-size:7px;color:#6a7a8a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5}
+.chatArrow{color:#4fc3f7;font-size:14px}
+
+/* ЧАТ */
+#chatScreen{display:none;flex-direction:column;height:100dvh;background:#0a0418}
+#chatScreen.on{display:flex}
+#chatHeader{display:flex;align-items:center;gap:10px;padding:10px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(180deg,#2a1840,#150826);border-bottom:3px solid #4fc3f7}
+#chatBack{background:none;border:none;color:#4fc3f7;font-size:20px;cursor:pointer;padding:5px;font-family:inherit}
+#chatHeaderAvatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(180deg,#3a1a5a,#1a0a3a);border:2px solid #ffd54f;overflow:hidden;flex-shrink:0}
+#chatHeaderAvatar canvas{width:100%;height:100%}
+#chatHeaderName{font-size:12px;color:#fff;font-weight:900;flex:1;text-shadow:2px 2px 0 #000}
+
+#messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+#messages::-webkit-scrollbar{width:6px}
+#messages::-webkit-scrollbar-thumb{background:#ff8ec8;border-radius:3px}
+.message{max-width:80%;padding:8px 12px;border-radius:12px;font-size:9px;line-height:1.6;word-wrap:break-word;animation:msgPop .2s}
+@keyframes msgPop{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.message.mine{align-self:flex-end;background:linear-gradient(180deg,#4fc3f7,#0277bd);color:#fff;border-bottom-right-radius:3px}
+.message.theirs{align-self:flex-start;background:linear-gradient(180deg,#4a2558,#2d1338);color:#fff;border-bottom-left-radius:3px;border:1px solid #6a3a7a}
+.message .time{font-size:6px;opacity:.7;margin-top:3px;display:block}
+.message .sender{font-size:7px;color:#ffd54f;margin-bottom:3px;font-weight:900}
+
+#chatInput{display:flex;gap:6px;padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:#1a0a2a;border-top:2px solid #ff8ec8}
+#messageInput{flex:1;background:#1a2a4a;border:3px solid #4fc3f7;border-radius:10px;padding:12px;color:#fff;font-family:inherit;font-size:9px;outline:none}
+#messageInput:focus{border-color:#ffd54f}
+#btnSend{background:linear-gradient(180deg,#66bb6a,#388e3c);color:#fff;border:3px solid #fff;border-radius:10px;padding:0 16px;font-family:inherit;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #1b5e20}
+#btnSend:active{transform:translateY(2px);box-shadow:0 2px 0 #1b5e20}
+
+/* ПРОФИЛЬ */
+.avatarBig{width:160px;height:160px;margin:20px auto;border-radius:20px;background:linear-gradient(180deg,#3a1a5a,#1a0a3a);border:4px solid #ffd54f;overflow:hidden;box-shadow:0 0 30px rgba(255,213,79,.3)}
+.avatarBig canvas{width:100%;height:100%}
+.profileSection{background:linear-gradient(180deg,#1a2a4a,#0a1a3a);border:2px solid #2a4a6a;border-radius:10px;padding:12px;margin-bottom:10px}
+.profileSection label{display:block;font-size:8px;color:#4fc3f7;margin-bottom:8px;letter-spacing:1px}
+.profileInput{background:#0a1a2a;border:2px solid #4fc3f7;border-radius:6px;padding:10px;color:#fff;font-family:inherit;font-size:10px;width:100%;outline:none;margin-bottom:8px}
+.colorRow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.colorDot{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.15s}
+.colorDot.sel{border-color:#fff;box-shadow:0 0 12px #ffd54f;transform:scale(1.1)}
+.btnSave{background:linear-gradient(180deg,#66bb6a,#388e3c);color:#fff;border:3px solid #fff;border-radius:8px;padding:12px;font-family:inherit;font-weight:900;font-size:10px;cursor:pointer;width:100%;box-shadow:0 4px 0 #1b5e20;letter-spacing:1px}
+.btnSave:active{transform:translateY(2px);box-shadow:0 2px 0 #1b5e20}
+
+#toast{position:fixed;top:20%;left:50%;transform:translate(-50%,-50%) scale(.7);background:linear-gradient(180deg,#ffd54f,#f9a825);color:#402000;padding:12px 22px;border-radius:10px;font-weight:900;font-size:10px;z-index:300;opacity:0;pointer-events:none;transition:.3s;border:4px solid #fff;text-align:center;line-height:1.5;max-width:80%;box-shadow:0 6px 0 #705010}
+#toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+#installBtn{position:fixed;bottom:20px;right:20px;background:linear-gradient(180deg,#66bb6a,#388e3c);color:#fff;border:3px solid #fff;border-radius:50%;width:60px;height:60px;font-size:24px;cursor:pointer;z-index:50;box-shadow:0 4px 0 #1b5e20,0 8px 20px rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
+#installBtn.on{display:flex}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="loginScreen">
+    <canvas id="catCanvasLogin" width="180" height="180"></canvas>
+    <h1>🐱 CATSMS</h1>
+    <h2>2D МЕССЕНДЖЕР</h2>
+    <input type="email" id="loginEmail" class="loginInput" placeholder="Email" autocomplete="off">
+    <input type="password" id="loginPassword" class="loginInput" placeholder="Пароль (мин 6)" autocomplete="off">
+    <button id="btnLogin">🔐 ВОЙТИ</button>
+    <button id="btnRegister">✨ РЕГИСТРАЦИЯ</button>
+    <div id="loginError"></div>
+  </div>
+
+  <div id="mainScreen">
+    <div id="header">
+      <div id="headerAvatar"><canvas width="60" height="60"></canvas></div>
+      <div id="headerInfo">
+        <div id="headerName">Ник</div>
+        <div id="headerStatus">🟢 онлайн</div>
+      </div>
+      <div id="headerButtons">
+        <button class="iconBtn" id="btnLogout" title="Выйти">🚪</button>
+      </div>
+    </div>
+
+    <div id="tabs">
+      <div class="tab active" data-tab="chats">💬 ЧАТЫ</div>
+      <div class="tab" data-tab="users">👥 ЛЮДИ</div>
+      <div class="tab" data-tab="profile">⚙️ ПРОФИЛЬ</div>
+    </div>
+
+    <div id="content"></div>
+  </div>
+
+  <div id="chatScreen">
+    <div id="chatHeader">
+      <button id="chatBack">←</button>
+      <div id="chatHeaderAvatar"><canvas width="44" height="44"></canvas></div>
+      <div id="chatHeaderName">Чат</div>
+    </div>
+    <div id="messages"></div>
+    <div id="chatInput">
+      <input type="text" id="messageInput" placeholder="Сообщение...">
+      <button id="btnSend">➤</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<button id="installBtn">📲</button>
+
+<script type="module">
+// ============================================================
+//  КЛЮЧИ FIREBASE
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBmrc8pCePBgbqXCUoxeV7sVDVnQk7uIC0",
+  authDomain: "catsms.firebaseapp.com",
+  projectId: "catsms",
+  storageBucket: "catsms.firebasestorage.app",
+  messagingSenderId: "581879213237",
+  appId: "1:581879213237:web:9686ccb9a67c05505a22fc"
+};
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ============================================================
+//  ПИКСЕЛЬНЫЕ КОТИКИ
+// ============================================================
+const CAT_COLORS = ['#ffb070', '#dd8866', '#aa8844', '#ffcc88', '#cc9966', '#ffaa55', '#88ddff', '#d0a8e8', '#ff69d8', '#66bb6a'];
+const EYE_COLORS = ['#222222', '#ff3030', '#4fc3f7', '#66bb6a', '#ffd54f', '#9c27b0'];
+
+let currentUser = null;
+let currentUserData = null;
+let currentChatId = null;
+let currentChatUser = null;
+let messagesUnsub = null;
+
+function drawPixelCat(canvas, catData) {
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width;
+  const px = size / 16;
+  ctx.clearRect(0, 0, size, size);
+  ctx.imageSmoothingEnabled = false;
+  
+  // Тени
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(size/2, size*0.92, size*0.35, size*0.05, 0, 0, Math.PI*2);
+  ctx.fill();
+  
+  // Тело
+  ctx.fillStyle = catData.bodyColor;
+  ctx.fillRect(px*4, px*8, px*8, px*6);
+  // Живот
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillRect(px*6, px*10, px*4, px*4);
+  
+  // Лапы
+  ctx.fillStyle = catData.bodyColor;
+  ctx.fillRect(px*4, px*13, px*2, px*2);
+  ctx.fillRect(px*10, px*13, px*2, px*2);
+  
+  // Голова
+  ctx.fillStyle = catData.bodyColor;
+  ctx.fillRect(px*2, px*2, px*12, px*7);
+  
+  // Уши (по стилю)
+  if (catData.earStyle === 0) {
+    // Треугольные
+    ctx.fillStyle = catData.bodyColor;
+    ctx.fillRect(px*2, px*0, px*3, px*3);
+    ctx.fillRect(px*11, px*0, px*3, px*3);
+    ctx.fillStyle = '#ff90b0';
+    ctx.fillRect(px*3, px*1, px*1, px*1);
+    ctx.fillRect(px*12, px*1, px*1, px*1);
+  } else if (catData.earStyle === 1) {
+    // Квадратные
+    ctx.fillStyle = catData.bodyColor;
+    ctx.fillRect(px*2, px*1, px*2, px*2);
+    ctx.fillRect(px*12, px*1, px*2, px*2);
+    ctx.fillStyle = '#ff90b0';
+    ctx.fillRect(px*2, px*1, px*1, px*1);
+    ctx.fillRect(px*13, px*1, px*1, px*1);
+  } else {
+    // Опущенные
+    ctx.fillStyle = catData.bodyColor;
+    ctx.fillRect(px*1, px*2, px*3, px*2);
+    ctx.fillRect(px*12, px*2, px*3, px*2);
+  }
+  
+  // Глаза
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(px*4, px*4, px*2, px*2);
+  ctx.fillRect(px*10, px*4, px*2, px*2);
+  ctx.fillStyle = catData.eyeColor;
+  ctx.fillRect(px*4, px*4, px*2, px*1);
+  ctx.fillRect(px*10, px*4, px*2, px*1);
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(px*5, px*4, px*1, px*1);
+  ctx.fillRect(px*11, px*4, px*1, px*1);
+  
+  // Розовые щёчки
+  ctx.fillStyle = '#ffb0c0';
+  ctx.fillRect(px*2, px*6, px*2, px*1);
+  ctx.fillRect(px*12, px*6, px*2, px*1);
+  
+  // Нос
+  ctx.fillStyle = '#ff5898';
+  ctx.fillRect(px*7, px*6, px*2, px*1);
+  
+  // Рот
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(px*7, px*7, px*1, px*1);
+  ctx.fillRect(px*8, px*8, px*1, px*1);
+  ctx.fillRect(px*8, px*7, px*1, px*1);
+  
+  // Узор
+  if (catData.pattern === 1) {
+    // Пятна
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(px*5, px*2, px*2, px*1);
+    ctx.fillRect(px*10, px*3, px*1, px*1);
+    ctx.fillRect(px*9, px*10, px*2, px*1);
+  } else if (catData.pattern === 2) {
+    // Полоски
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(px*3, px*2, px*1, px*2);
+    ctx.fillRect(px*5, px*2, px*1, px*2);
+    ctx.fillRect(px*10, px*2, px*1, px*2);
+    ctx.fillRect(px*12, px*2, px*1, px*2);
+  }
+}
+
+function randomCatData() {
+  return {
+    bodyColor: CAT_COLORS[Math.floor(Math.random() * CAT_COLORS.length)],
+    eyeColor: EYE_COLORS[Math.floor(Math.random() * EYE_COLORS.length)],
+    earStyle: Math.floor(Math.random() * 3),
+    pattern: Math.floor(Math.random() * 3),
+  };
+}
+
+// ============================================================
+//  UI
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('on'), 1500);
+}
+
+function showError(msg) {
+  document.getElementById('loginError').textContent = msg;
+}
+
+// ============================================================
+//  АУТЕНТИФИКАЦИЯ
+// ============================================================
+document.getElementById('btnRegister').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || password.length < 6) { showError('Email + пароль (мин 6)'); return; }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const catData = randomCatData();
+    const nick = 'Кот_' + Math.floor(Math.random() * 9999);
+    await updateProfile(cred.user, { displayName: nick });
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      uid: cred.user.uid,
+      email: email,
+      nick: nick,
+      catData: catData,
+      createdAt: serverTimestamp(),
+    });
+    showError('');
+  } catch (e) {
+    showError(e.message);
+  }
+};
+
+document.getElementById('btnLogin').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) { showError('Введи email и пароль'); return; }
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    showError('');
+  } catch (e) {
+    showError(e.message);
+  }
+};
+
+document.getElementById('btnLogout').onclick = async () => {
+  await signOut(auth);
+  location.reload();
+};
+
+// ============================================================
+//  СОСТОЯНИЕ
+// ============================================================
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      currentUserData = userDoc.data();
+    } else {
+      const catData = randomCatData();
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        nick: user.displayName || 'Кот',
+        catData: catData,
+        createdAt: serverTimestamp(),
+      });
+      currentUserData = { uid: user.uid, email: user.email, nick: user.displayName || 'Кот', catData };
+    }
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainScreen').classList.add('on');
+    document.getElementById('headerName').textContent = currentUserData.nick;
+    drawPixelCat(document.querySelector('#headerAvatar canvas'), currentUserData.catData);
+    renderTab('chats');
+  } else {
+    currentUser = null;
+    currentUserData = null;
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('mainScreen').classList.remove('on');
+    document.getElementById('chatScreen').classList.remove('on');
+  }
+});
+
+// ============================================================
+//  ВКЛАДКИ
+// ============================================================
+let currentTab = 'chats';
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    renderTab(currentTab);
+  };
+});
+
+async function renderTab(tab) {
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+  if (tab === 'chats') {
+    content.innerHTML = '<p style="color:#888;font-size:9px;text-align:center;padding:20px">Открой вкладку ЛЮДИ<br>и выбери с кем поговорить</p>';
+  } else if (tab === 'users') {
+    await renderUsers();
+  } else if (tab === 'profile') {
+    await renderProfile();
+  }
+}
+
+// ============================================================
+//  ЛЮДИ
+// ============================================================
+async function renderUsers() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<p style="color:#4fc3f7;font-size:9px;text-align:center;padding:10px">Загрузка...</p>';
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    content.innerHTML = '';
+    let count = 0;
+    usersSnap.forEach(docSnap => {
+      const u = docSnap.data();
+      if (u.uid === currentUser.uid) return;
+      count++;
+      const el = document.createElement('div');
+      el.className = 'chatItem';
+      el.innerHTML = `
+        <div class="chatAvatar"><canvas width="50" height="50"></canvas></div>
+        <div class="chatInfo">
+          <div class="chatName">${u.nick || 'Кот'}</div>
+          <div class="chatPreview">${u.email || ''}</div>
+        </div>
+        <div class="chatArrow">➤</div>
+      `;
+      content.appendChild(el);
+      drawPixelCat(el.querySelector('canvas'), u.catData);
+      el.onclick = () => openChat(u);
+    });
+    if (count === 0) {
+      content.innerHTML = '<p style="color:#888;font-size:9px;text-align:center;padding:20px">Пока никого нет<br>Пригласи друга!</p>';
+    }
+  } catch(e) {
+    content.innerHTML = '<p style="color:#ff5555;font-size:9px;text-align:center;padding:20px">Ошибка: ' + e.message + '</p>';
+  }
+}
+
+// ============================================================
+//  ПРОФИЛЬ
+// ============================================================
+async function renderProfile() {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="avatarBig"><canvas width="160" height="160"></canvas></div>
+    <div class="profileSection">
+      <label>НИКНЕЙМ</label>
+      <input type="text" class="profileInput" id="profileNick" value="${currentUserData.nick || ''}">
+      <button class="btnSave" id="btnSaveNick">💾 СОХРАНИТЬ НИК</button>
+    </div>
+    <div class="profileSection">
+      <label>ЦВЕТ КОТИКА</label>
+      <div class="colorRow" id="colorRow"></div>
+    </div>
+    <div class="profileSection">
+      <label>ГЛАЗА</label>
+      <div class="colorRow" id="eyeRow"></div>
+    </div>
+    <button class="btnSave" id="btnSaveAvatar">💾 СОХРАНИТЬ АВАТАРКУ</button>
+  `;
+  drawPixelCat(content.querySelector('.avatarBig canvas'), currentUserData.catData);
+  
+  const colorRow = document.getElementById('colorRow');
+  CAT_COLORS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'colorDot' + (currentUserData.catData.bodyColor === c ? ' sel' : '');
+    d.style.background = c;
+    d.onclick = () => {
+      currentUserData.catData.bodyColor = c;
+      drawPixelCat(content.querySelector('.avatarBig canvas'), currentUserData.catData);
+      colorRow.querySelectorAll('.colorDot').forEach(x => x.classList.remove('sel'));
+      d.classList.add('sel');
+    };
+    colorRow.appendChild(d);
+  });
+  
+  const eyeRow = document.getElementById('eyeRow');
+  EYE_COLORS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'colorDot' + (currentUserData.catData.eyeColor === c ? ' sel' : '');
+    d.style.background = c;
+    d.onclick = () => {
+      currentUserData.catData.eyeColor = c;
+      drawPixelCat(content.querySelector('.avatarBig canvas'), currentUserData.catData);
+      eyeRow.querySelectorAll('.colorDot').forEach(x => x.classList.remove('sel'));
+      d.classList.add('sel');
+    };
+    eyeRow.appendChild(d);
+  });
+  
+  document.getElementById('btnSaveNick').onclick = async () => {
+    const nick = document.getElementById('profileNick').value.trim();
+    if (!nick) return;
+    await updateDoc(doc(db, 'users', currentUser.uid), { nick });
+    currentUserData.nick = nick;
+    document.getElementById('headerName').textContent = nick;
+    showToast('✅ Ник сохранён');
+  };
+  
+  document.getElementById('btnSaveAvatar').onclick = async () => {
+    await updateDoc(doc(db, 'users', currentUser.uid), { catData: currentUserData.catData });
+    drawPixelCat(document.querySelector('#headerAvatar canvas'), currentUserData.catData);
+    showToast('✅ Аватарка сохранена');
+  };
+}
+
+// ============================================================
+//  ЧАТ
+// ============================================================
+function openChat(otherUser) {
+  currentChatUser = otherUser;
+  const ids = [currentUser.uid, otherUser.uid].sort();
+  currentChatId = ids[0] + '_' + ids[1];
+  
+  document.getElementById('chatHeaderName').textContent = otherUser.nick || 'Кот';
+  drawPixelCat(document.querySelector('#chatHeaderAvatar canvas'), otherUser.catData);
+  document.getElementById('chatScreen').classList.add('on');
+  document.getElementById('mainScreen').classList.remove('on');
+  
+  loadMessages();
+}
+
+function loadMessages() {
+  if (messagesUnsub) messagesUnsub();
+  const messagesEl = document.getElementById('messages');
+  messagesEl.innerHTML = '<p style="color:#4fc3f7;font-size:9px;text-align:center;padding:20px">Загрузка...</p>';
+  
+  const q = query(
+    collection(db, 'messages'),
+    where('chatId', '==', currentChatId),
+    orderBy('createdAt', 'asc')
+  );
+  
+  messagesUnsub = onSnapshot(q, (snap) => {
+    messagesEl.innerHTML = '';
+    snap.forEach(doc => {
+      const m = doc.data();
+      const el = document.createElement('div');
+      el.className = 'message ' + (m.from === currentUser.uid ? 'mine' : 'theirs');
+      const time = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : '';
+      el.innerHTML = `
+        ${m.from !== currentUser.uid ? `<div class="sender">${m.fromNick || 'Кот'}</div>` : ''}
+        <div>${escapeHtml(m.text)}</div>
+        <span class="time">${time}</span>
+      `;
+      messagesEl.appendChild(el);
+    });
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+document.getElementById('chatBack').onclick = () => {
+  document.getElementById('chatScreen').classList.remove('on');
+  document.getElementById('mainScreen').classList.add('on');
+  if (messagesUnsub) messagesUnsub();
+  renderTab(currentTab);
+};
+
+document.getElementById('btnSend').onclick = sendMessage;
+document.getElementById('messageInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+  if (!text || !currentChatId) return;
+  input.value = '';
+  try {
+    await addDoc(collection(db, 'messages'), {
+      chatId: currentChatId,
+      from: currentUser.uid,
+      fromNick: currentUserData.nick,
+      to: currentChatUser.uid,
+      text: text,
+      createdAt: serverTimestamp(),
+    });
+  } catch(e) {
+    showToast('Ошибка: ' + e.message);
+  }
+}
+
+// ============================================================
+//  PWA УСТАНОВКА
+// ============================================================
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.add('on');
+});
+
+installBtn.onclick = async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.classList.remove('on');
+  } else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    showToast('Safari → Поделиться → На экран Домой');
+  } else {
+    showToast('Меню браузера → Установить');
+  }
+};
+
+// ============================================================
+//  СТАРТ
+// ============================================================
+drawPixelCat(document.getElementById('catCanvasLogin'), randomCatData());
+</script>
+</body>
+</html>
